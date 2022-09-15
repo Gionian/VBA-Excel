@@ -23,10 +23,10 @@ Set Temp = Sheets("Template")
 'Creating the text of the email
 StrBody = "<br>" & "<pre><font size=""3"" face=""Calibri"">" & _
             "Dear Team," & "<br><br>" & _
-            "Please find below the number for your Movie" & "<br>" & "</pre>"
+            "Please find below the numbers for your Movie" & "<br>" & "</pre>"
                 
 Signature = "<br>" & "<pre><font size=""3"" face=""Calibri"">" & _
-            "Thanks you," & "<br><br>" & _
+            "Thank you," & "<br><br>" & _
             "Company CFO" & "<br>" & "</pre>" & " _______________________________________"
       
 'Selecting the table to copy
