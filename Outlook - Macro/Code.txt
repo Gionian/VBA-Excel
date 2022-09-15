@@ -1,0 +1,118 @@
+Sub Email_Macro()
+
+Dim OutApp As Object
+Dim OutMail As Object
+Dim Temp As Worksheet
+Dim StrBody As String
+Dim Signature As String
+Dim pop As Range
+
+'Go to Tools -> References -> Microsoft Outlook v.... Library
+    
+' On Error GoTo cleanup
+Set OutApp = CreateObject("Outlook.Application")
+Set OutMail = OutApp.CreateItem(0)
+    
+With Application
+   .EnableEvents = False
+   .ScreenUpdating = False
+End With
+    
+Set Temp = Sheets("Template")
+
+'Creating the text of the email
+StrBody = "<br>" & "<pre><font size=""3"" face=""Calibri"">" & _
+            "Dear Team," & "<br><br>" & _
+            "Please find below the number for your Movie" & "<br>" & "</pre>"
+                
+Signature = "<br>" & "<pre><font size=""3"" face=""Calibri"">" & _
+            "Thanks you," & "<br><br>" & _
+            "Company CFO" & "<br>" & "</pre>" & " _______________________________________"
+      
+'Selecting the table to copy
+Temp.Range("A1").Select
+Range(Selection, Selection.End(xlDown)).Select
+Range(Selection, Selection.End(xlToRight)).Select
+Set pop = Selection
+    
+'Setting up the email.
+On Error Resume Next
+    With OutMail
+        .To = "marvel.studio@outlook.com"
+        .CC = "stan.lee@outlook.com"
+        .Subject = "Some random Marvel Numbers"
+        .HTMLBody = StrBody & _
+                        RangetoHTML(pop) & _
+                        Signature & _
+                        .HTMLBody
+        .Display
+        '.Send
+                                                         
+    End With
+    On Error GoTo 0
+
+Set OutMail = Nothing
+Set OutApp = Nothing
+
+cleanup:
+    Set OutApp = Nothing
+    Application.ScreenUpdating = False
+
+End Sub
+
+
+Function RangetoHTML(rng As Range)
+
+    Dim fso As Object
+    Dim ts As Object
+    Dim TempFile As String
+    Dim TempWB As Workbook
+
+    TempFile = Environ$("temp") & "\" & Format(Now, "dd-mm-yy h-mm-ss") & ".htm"
+
+    'Copy the range and create a new workbook to past the data in
+    rng.Copy
+    Set TempWB = Workbooks.Add(1)
+    With TempWB.Sheets(1)
+        .Cells(1).PasteSpecial Paste:=8
+        .Cells(1).PasteSpecial xlPasteValues, , False, False
+        .Cells(1).PasteSpecial xlPasteFormats, , False, False
+        .Cells(1).Select
+        Application.CutCopyMode = False
+        On Error Resume Next
+        .DrawingObjects.Visible = True
+        .DrawingObjects.Delete
+        On Error GoTo 0
+    End With
+
+    'Publish the sheet to a htm file
+    With TempWB.PublishObjects.Add( _
+         SourceType:=xlSourceRange, _
+         Filename:=TempFile, _
+         Sheet:=TempWB.Sheets(1).Name, _
+         Source:=TempWB.Sheets(1).UsedRange.Address, _
+         HtmlType:=xlHtmlStatic)
+        .Publish (True)
+    End With
+
+    'Read all data from the htm file into RangetoHTML
+    Set fso = CreateObject("Scripting.FileSystemObject")
+    Set ts = fso.GetFile(TempFile).OpenAsTextStream(1, -2)
+    RangetoHTML = ts.readall
+    ts.Close
+    RangetoHTML = Replace(RangetoHTML, "align=center x:publishsource=", _
+                          "align=left x:publishsource=")
+
+    'Close TempWB
+    TempWB.Close savechanges:=False
+
+    'Delete the htm file we used in this function
+    Kill TempFile
+
+    Set ts = Nothing
+    Set fso = Nothing
+    Set TempWB = Nothing
+End Function
+ 
+
+
